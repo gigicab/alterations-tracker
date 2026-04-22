@@ -711,9 +711,20 @@ function loadStatusData() {
   var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=Events';
   document.getElementById('status-list').innerHTML = '<div class="status-loading">Loading garments...</div>';
   fetch(url)
-    .then(function(r) { return r.text(); })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
     .then(function(csv) {
+      if (!csv || csv.trim().length === 0) {
+        document.getElementById('status-list').innerHTML = '<div class="status-empty">No data found in Events sheet.</div>';
+        return;
+      }
       var rows = csv.trim().split('\n').slice(1);
+      if (rows.length === 0 || (rows.length === 1 && rows[0].trim() === '')) {
+        document.getElementById('status-list').innerHTML = '<div class="status-empty">No events recorded yet. Do a test scan first.</div>';
+        return;
+      }
       var events = rows.map(function(row) {
         var cols = row.split(',').map(function(c){ return c.replace(/^"|"$/g,'').trim(); });
         return {
@@ -721,6 +732,11 @@ function loadStatusData() {
           action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7]
         };
       }).filter(function(e){ return e.ticket; });
+
+      if (events.length === 0) {
+        document.getElementById('status-list').innerHTML = '<div class="status-empty">No valid events found. Check sheet column order.</div>';
+        return;
+      }
 
       var map = {};
       events.forEach(function(e) {
@@ -754,8 +770,8 @@ function loadStatusData() {
       renderStatusCounts();
       renderStatusList();
     })
-    .catch(function() {
-      document.getElementById('status-list').innerHTML = '<div class="status-empty">Could not load data. Check your connection.</div>';
+    .catch(function(err) {
+      document.getElementById('status-list').innerHTML = '<div class="status-empty">Error loading data: ' + err.message + '<br><br>Make sure the Sheet is set to public viewer.</div>';
     });
 }
 
