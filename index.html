@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Alterations">
+<title>Alterations Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --black: #000000;
+    --black-soft: #111111;
+    --white: #ffffff;
+    --gray-50: #fafafa;
+    --gray-100: #f5f5f5;
+    --gray-200: #e8e8e8;
+    --gray-400: #a0a0a0;
+    --gray-600: #666666;
+    --gray-800: #222222;
+    --accent: #c8a96e;
+    --accent-light: #f5ede0;
+    --green: #1a6640;
+    --green-bg: #e8f4ee;
+    --amber: #92580a;
+    --amber-bg: #fdf0dc;
+    --red: #991a1a;
+    --red-bg: #fdeaea;
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+  }
+  html, body { height: 100%; background: var(--white); font-family: 'DM Sans', sans-serif; color: var(--black); overflow: hidden; }
+  .app { display: flex; flex-direction: column; height: 100vh; max-width: 430px; margin: 0 auto; position: relative; overflow: hidden; }
+
+  /* TOPBAR */
+  .topbar { background: var(--black); padding: 52px 24px 20px; flex-shrink: 0; }
+  .topbar-store { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 400; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+  .topbar-title { font-size: 18px; font-weight: 500; color: var(--white); }
+  .topbar-row { display: flex; align-items: flex-end; justify-content: space-between; }
+  .topbar-sa { text-align: right; }
+  .topbar-sa-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+  .topbar-sa-name { font-size: 13px; font-weight: 500; color: var(--white); cursor: pointer; }
+  .topbar-sa-name span { color: var(--accent); font-size: 11px; margin-left: 4px; }
+
+  /* SCREENS */
+  .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .screen.active { display: flex; }
+  .screen-pad { padding: 24px 20px 40px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+
+  /* HOME SCREEN */
+  .home-greeting { padding: 28px 20px 8px; }
+  .home-date { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+  .home-headline { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; color: var(--black); line-height: 1.25; }
+
+  .action-cards { padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 12px; }
+  .action-card {
+    background: var(--white); border: 1px solid var(--gray-200);
+    border-radius: var(--radius); padding: 22px 22px;
+    display: flex; align-items: center; gap: 18px;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    text-align: left;
+  }
+  .action-card:active { transform: scale(0.98); }
+  .action-card.primary { background: var(--black); border-color: var(--black); }
+  .action-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .action-card.primary .action-icon { background: rgba(255,255,255,0.1); }
+  .action-card:not(.primary) .action-icon { background: var(--gray-100); }
+  .action-icon svg { width: 22px; height: 22px; }
+  .action-text { flex: 1; }
+  .action-title { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+  .action-card.primary .action-title { color: var(--white); }
+  .action-card:not(.primary) .action-title { color: var(--black); }
+  .action-sub { font-size: 12px; }
+  .action-card.primary .action-sub { color: var(--gray-400); }
+  .action-card:not(.primary) .action-sub { color: var(--gray-600); }
+  .action-arrow { font-size: 18px; }
+  .action-card.primary .action-arrow { color: var(--gray-400); }
+  .action-card:not(.primary) .action-arrow { color: var(--gray-200); }
+
+  /* SA SELECT SCREEN */
+  .screen-header { padding: 24px 20px 8px; flex-shrink: 0; }
+  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--gray-600); cursor: pointer; margin-bottom: 20px; background: none; border: none; font-family: 'DM Sans', sans-serif; padding: 0; }
+  .back-btn svg { width: 16px; height: 16px; }
+  .screen-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 400; color: var(--black); margin-bottom: 4px; }
+  .screen-sub { font-size: 13px; color: var(--gray-600); }
+
+  .sa-list { padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
+  .sa-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-200); cursor: pointer;
+    transition: all 0.1s; background: var(--white);
+  }
+  .sa-item:active { background: var(--gray-50); transform: scale(0.99); }
+  .sa-item.selected { border-color: var(--black); background: var(--black); }
+  .sa-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--gray-600); flex-shrink: 0; }
+  .sa-item.selected .sa-avatar { background: rgba(255,255,255,0.15); color: var(--white); }
+  .sa-info { flex: 1; }
+  .sa-name { font-size: 15px; font-weight: 500; color: var(--black); }
+  .sa-item.selected .sa-name { color: var(--white); }
+  .sa-id { font-size: 12px; color: var(--gray-600); margin-top: 1px; font-family: 'DM Mono', monospace; }
+  .sa-item.selected .sa-id { color: var(--gray-400); }
+  .sa-check { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; }
+  .sa-item.selected .sa-check { display: flex; }
+  .sa-check svg { width: 11px; height: 11px; }
+
+  /* SCAN SCREEN */
+  .scan-screen { background: var(--black); }
+  .scan-topbar { padding: 52px 20px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .scan-back { background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .scan-back svg { width: 16px; height: 16px; stroke: white; }
+  .scan-action-label { font-size: 13px; font-weight: 500; color: var(--white); }
+  .scan-sa-label { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; }
+
+  .scan-viewport { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  #scanner-video { width: 100%; height: 100%; object-fit: cover; }
+  .scan-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+  .scan-frame { width: 260px; height: 120px; position: relative; }
+  .scan-frame::before, .scan-frame::after { content: ''; position: absolute; width: 28px; height: 28px; border-color: var(--white); border-style: solid; border-width: 0; }
+  .scan-frame::before { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-radius: 4px 0 0 0; }
+  .scan-frame::after { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-radius: 0 4px 0 0; }
+  .scan-frame-bottom::before, .scan-frame-bottom::after { content: ''; position: absolute; width: 28px; height: 28px; border-color: var(--white); border-style: solid; border-width: 0; }
+  .scan-frame-bottom::before { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
+  .scan-frame-bottom::after { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 4px 0; }
+  .scan-line { position: absolute; left: 4px; right: 4px; height: 2px; background: var(--accent); top: 50%; animation: scanline 2s ease-in-out infinite; opacity: 0.8; border-radius: 2px; }
+  @keyframes scanline { 0%, 100% { top: 15%; opacity: 0.4; } 50% { top: 85%; opacity: 1; } }
+  .scan-hint { margin-top: 24px; font-size: 13px; color: rgba(255,255,255,0.5); text-align: center; letter-spacing: 0.3px; }
+
+  .scan-manual { padding: 20px; flex-shrink: 0; }
+  .manual-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .manual-divider span { font-size: 11px; color: var(--gray-600); }
+  .manual-divider::before, .manual-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+  .manual-row { display: flex; gap: 8px; }
+  .manual-input { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-xs); padding: 13px 14px; font-size: 15px; font-family: 'DM Mono', monospace; color: var(--white); outline: none; }
+  .manual-input::placeholder { color: var(--gray-600); }
+  .manual-input:focus { border-color: var(--accent); }
+  .manual-submit { background: var(--accent); border: none; border-radius: var(--radius-xs); padding: 13px 18px; font-size: 14px; font-weight: 600; color: var(--black); cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  .manual-submit:active { opacity: 0.85; }
+
+  /* CONFIRM SCREEN */
+  .confirm-screen { background: var(--white); }
+  .confirm-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; gap: 0; }
+  .confirm-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+  .confirm-icon.success { background: var(--green-bg); }
+  .confirm-icon svg { width: 36px; height: 36px; }
+  .confirm-action { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-400); margin-bottom: 8px; }
+  .confirm-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; color: var(--black); text-align: center; margin-bottom: 32px; line-height: 1.3; }
+  .confirm-card { width: 100%; background: var(--gray-50); border-radius: var(--radius-sm); border: 1px solid var(--gray-200); overflow: hidden; margin-bottom: 32px; }
+  .confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--gray-200); }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-label { font-size: 12px; color: var(--gray-600); }
+  .confirm-value { font-size: 13px; font-weight: 500; color: var(--black); font-family: 'DM Mono', monospace; }
+  .confirm-value.plain { font-family: 'DM Sans', sans-serif; }
+  .confirm-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.3px; }
+  .pill-checkin { background: var(--amber-bg); color: var(--amber); }
+  .pill-complete { background: var(--green-bg); color: var(--green); }
+  .pill-pickup { background: #e8eef8; color: #1a3a7a; }
+  .confirm-progress { font-size: 13px; color: var(--gray-600); text-align: center; margin-bottom: 0; }
+  .progress-dots { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; margin-bottom: 32px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); }
+  .dot.done { background: var(--green); }
+  .dot.current { background: var(--black); width: 24px; border-radius: 4px; }
+  .btn-done { width: 100%; padding: 16px; background: var(--black); color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.3px; }
+  .btn-done:active { background: var(--black-soft); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--black); color: var(--white); padding: 12px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; white-space: nowrap; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 100; pointer-events: none; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+
+
+  .scan-frame-bottom { width: 260px; height: 0; position: relative; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <div class="topbar-store">Bloomingdale's</div>
+        <div class="topbar-title">Alterations Tracker</div>
+      </div>
+      <div class="topbar-sa" onclick="changeSA()">
+        <div class="topbar-sa-label">Sales Associate</div>
+        <div class="topbar-sa-name" id="topbar-sa-name">Select name <span>▼</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="home-greeting">
+      <div class="home-date" id="home-date"></div>
+      <div class="home-headline">What are<br>you tracking?</div>
+    </div>
+    <div class="action-cards">
+      <div class="action-card primary" onclick="startAction('checkin')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2H8a2 2 0 00-2 2v16a2 2 0 002 2h8a2 2 0 002-2V8z"/><polyline points="12 2 12 8 18 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">Check In Garment</div>
+          <div class="action-sub">Garment arrives in tailor room</div>
+        </div>
+        <div class="action-arrow">›</div>
+      </div>
+      <div class="action-card" onclick="startAction('complete')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1a6640" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">Mark Complete</div>
+          <div class="action-sub">Alteration is finished</div>
+        </div>
+        <div class="action-arrow">›</div>
+      </div>
+      <div class="action-card" onclick="startAction('pickup')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1a3a7a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">Customer Pickup</div>
+          <div class="action-sub">Customer collecting garment</div>
+        </div>
+        <div class="action-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SA SELECT -->
+  <div class="screen" id="screen-sa">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goHome()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+        Back
+      </button>
+      <div class="screen-title">Who are you?</div>
+      <div class="screen-sub">Select your name to continue</div>
+    </div>
+    <div class="sa-list" id="sa-list"></div>
+  </div>
+
+  <!-- SCAN -->
+  <div class="screen scan-screen" id="screen-scan">
+    <div class="scan-topbar">
+      <button class="scan-back" onclick="goBack()">
+        <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+      </button>
+      <div style="text-align:center">
+        <div class="scan-action-label" id="scan-action-label">Check In Garment</div>
+        <div class="scan-sa-label" id="scan-sa-label"></div>
+      </div>
+      <div style="width:36px"></div>
+    </div>
+    <div class="scan-viewport">
+      <video id="scanner-video" playsinline muted></video>
+      <div class="scan-overlay">
+        <div class="scan-frame">
+          <div class="scan-line"></div>
+        </div>
+        <div class="scan-frame-bottom"></div>
+        <div class="scan-hint">Point at alteration ticket barcode</div>
+      </div>
+    </div>
+    <div class="scan-manual">
+      <div class="manual-divider"><span>or enter manually</span></div>
+      <div class="manual-row">
+        <input class="manual-input" id="manual-input" type="text" placeholder="e.g. M20348291" autocomplete="off" autocorrect="off" spellcheck="false" />
+        <button class="manual-submit" onclick="submitManual()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div class="screen confirm-screen" id="screen-confirm">
+    <div class="confirm-body">
+      <div class="confirm-icon success">
+        <svg viewBox="0 0 36 36" fill="none" stroke="#1a6640" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 18l7 7L28 11"/>
+        </svg>
+      </div>
+      <div class="confirm-action" id="confirm-action-label">Checked In</div>
+      <div class="confirm-title" id="confirm-title">Garment<br>checked in</div>
+      <div class="confirm-card">
+        <div class="confirm-row"><span class="confirm-label">Ticket #</span><span class="confirm-value" id="confirm-ticket">—</span></div>
+        <div class="confirm-row"><span class="confirm-label">Action</span><span class="confirm-pill" id="confirm-pill">Check In</span></div>
+        <div class="confirm-row"><span class="confirm-label">Sales Associate</span><span class="confirm-value plain" id="confirm-sa">—</span></div>
+        <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value plain" id="confirm-date">—</span></div>
+        <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value" id="confirm-time">—</span></div>
+      </div>
+      <div class="progress-dots" id="progress-dots"></div>
+      <button class="btn-done" onclick="goHome()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+// To connect to Google Sheets, replace SHEET_ID and SHEET_NAME below.
+// Leave SHEET_ID empty to run in demo mode (no data is saved).
+var SHEET_ID = '';
+var SHEET_NAME = 'Events';
+var SA_SHEET_NAME = 'SA_List';
+
+// ─── DEMO SA LIST (used when Google Sheets is not connected) ──────────────────
+var DEMO_SAS = [
+  { name: 'Maria Santos', id: 'EMP-1042' },
+  { name: 'David Chen', id: 'EMP-2187' },
+  { name: 'Rosa Fernandez', id: 'EMP-3305' },
+  { name: 'James Kim', id: 'EMP-4410' },
+  { name: 'Priya Patel', id: 'EMP-5521' }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+var state = {
+  saList: [],
+  currentSA: JSON.parse(localStorage.getItem('currentSA') || 'null'),
+  pendingAction: null,
+  scanner: null,
+  scanning: false
+};
+
+var ACTION_META = {
+  checkin:  { label: 'Check In Garment', confirm: 'Garment\nchecked in', actionLabel: 'Checked In', pill: 'Check In', pillClass: 'pill-checkin', dot: 1 },
+  complete: { label: 'Mark Complete',    confirm: 'Alteration\ncomplete',  actionLabel: 'Completed',  pill: 'Complete', pillClass: 'pill-complete', dot: 2 },
+  pickup:   { label: 'Customer Pickup',  confirm: 'Pickup\nrecorded',      actionLabel: 'Picked Up',  pill: 'Pickup',   pillClass: 'pill-pickup',   dot: 3 }
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  updateHomeDate();
+  loadSAList();
+  updateTopbarSA();
+  loadZXingAsync();
+});
+
+function loadZXingAsync() {
+  var script = document.createElement('script');
+  script.src = 'https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js';
+  script.async = true;
+  script.onerror = function() { console.log('ZXing failed to load — manual entry only'); };
+  document.head.appendChild(script);
+}
+
+function updateHomeDate() {
+  var now = new Date();
+  var opts = { weekday: 'long', month: 'long', day: 'numeric' };
+  document.getElementById('home-date').textContent = now.toLocaleDateString('en-US', opts).toUpperCase();
+}
+
+function loadSAList() {
+  if (SHEET_ID) {
+    fetchSAListFromSheets();
+  } else {
+    state.saList = DEMO_SAS;
+    renderSAList();
+  }
+}
+
+function fetchSAListFromSheets() {
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + SA_SHEET_NAME + '?key=YOUR_API_KEY';
+  fetch(url).then(function(r){ return r.json(); }).then(function(data) {
+    if (data.values && data.values.length > 1) {
+      state.saList = data.values.slice(1).map(function(row) {
+        return { name: row[0] || '', id: row[1] || '' };
+      });
+    } else {
+      state.saList = DEMO_SAS;
+    }
+    renderSAList();
+  }).catch(function() {
+    state.saList = DEMO_SAS;
+    renderSAList();
+  });
+}
+
+function renderSAList() {
+  var el = document.getElementById('sa-list');
+  el.innerHTML = '';
+  state.saList.forEach(function(sa) {
+    var isSelected = state.currentSA && state.currentSA.name === sa.name;
+    var initials = sa.name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+    var div = document.createElement('div');
+    div.className = 'sa-item' + (isSelected ? ' selected' : '');
+    div.innerHTML =
+      '<div class="sa-avatar">' + initials + '</div>' +
+      '<div class="sa-info"><div class="sa-name">' + sa.name + '</div><div class="sa-id">' + sa.id + '</div></div>' +
+      '<div class="sa-check"><svg viewBox="0 0 11 11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M2 5.5l2.5 2.5 4.5-4.5"/></svg></div>';
+    div.onclick = function() { selectSA(sa); };
+    el.appendChild(div);
+  });
+}
+
+function selectSA(sa) {
+  state.currentSA = sa;
+  localStorage.setItem('currentSA', JSON.stringify(sa));
+  updateTopbarSA();
+  renderSAList();
+  setTimeout(function() {
+    if (state.pendingAction) {
+      goToScan();
+    } else {
+      goHome();
+    }
+  }, 200);
+}
+
+function updateTopbarSA() {
+  var el = document.getElementById('topbar-sa-name');
+  if (state.currentSA) {
+    el.innerHTML = state.currentSA.name.split(' ')[0] + ' <span>▼</span>';
+  } else {
+    el.innerHTML = 'Select name <span>▼</span>';
+  }
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  stopScanner();
+  state.pendingAction = null;
+  document.getElementById('manual-input').value = '';
+  showScreen('screen-home');
+}
+
+function goBack() {
+  stopScanner();
+  if (state.currentSA) {
+    showScreen('screen-home');
+  } else {
+    showScreen('screen-sa');
+  }
+}
+
+function changeSA() {
+  state.pendingAction = null;
+  showScreen('screen-sa');
+}
+
+function startAction(action) {
+  state.pendingAction = action;
+  if (!state.currentSA) {
+    showScreen('screen-sa');
+  } else {
+    goToScan();
+  }
+}
+
+function goToScan() {
+  var meta = ACTION_META[state.pendingAction];
+  document.getElementById('scan-action-label').textContent = meta.label;
+  document.getElementById('scan-sa-label').textContent = state.currentSA ? state.currentSA.name : '';
+  document.getElementById('manual-input').value = '';
+  showScreen('screen-scan');
+  startScanner();
+}
+
+// ─── SCANNER ──────────────────────────────────────────────────────────────────
+function startScanner() {
+  if (state.scanning) return;
+  if (typeof ZXing === 'undefined') {
+    console.log('ZXing not loaded, manual entry only');
+    return;
+  }
+  try {
+    var hints = new Map();
+    var formats = [
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.QR_CODE
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    state.scanner = new ZXing.BrowserMultiFormatReader(hints);
+    var videoEl = document.getElementById('scanner-video');
+    state.scanning = true;
+    state.scanner.decodeFromConstraints(
+      { video: { facingMode: 'environment' } },
+      videoEl,
+      function(result, err) {
+        if (result) {
+          var text = result.getText();
+          if (text && text.trim()) {
+            stopScanner();
+            processTicket(text.trim());
+          }
+        }
+      }
+    );
+  } catch(e) {
+    console.log('Scanner error:', e);
+  }
+}
+
+function stopScanner() {
+  if (state.scanner) {
+    try { state.scanner.reset(); } catch(e) {}
+    state.scanner = null;
+  }
+  state.scanning = false;
+  var video = document.getElementById('scanner-video');
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(function(t){ t.stop(); });
+    video.srcObject = null;
+  }
+}
+
+function submitManual() {
+  var val = document.getElementById('manual-input').value.trim();
+  if (!val) { showToast('Please enter a ticket number'); return; }
+  stopScanner();
+  processTicket(val);
+}
+
+// ─── PROCESS TICKET ───────────────────────────────────────────────────────────
+function processTicket(ticketNumber) {
+  var action = state.pendingAction;
+  var meta = ACTION_META[action];
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  var timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  var isoStr = now.toISOString();
+
+  var row = [
+    isoStr, ticketNumber, action, meta.actionLabel,
+    state.currentSA ? state.currentSA.name : '',
+    state.currentSA ? state.currentSA.id : '',
+    dateStr, timeStr
+  ];
+
+  writeToSheets(row);
+
+  document.getElementById('confirm-ticket').textContent = ticketNumber;
+  document.getElementById('confirm-sa').textContent = state.currentSA ? state.currentSA.name : '—';
+  document.getElementById('confirm-date').textContent = dateStr;
+  document.getElementById('confirm-time').textContent = timeStr;
+  document.getElementById('confirm-action-label').textContent = meta.actionLabel;
+  document.getElementById('confirm-title').textContent = meta.confirm.replace('\n', '\n');
+  document.getElementById('confirm-title').innerHTML = meta.confirm.replace('\n', '<br>');
+  var pill = document.getElementById('confirm-pill');
+  pill.textContent = meta.pill;
+  pill.className = 'confirm-pill ' + meta.pillClass;
+  renderProgressDots(meta.dot);
+  showScreen('screen-confirm');
+}
+
+function renderProgressDots(current) {
+  var el = document.getElementById('progress-dots');
+  var labels = ['Check In', 'Complete', 'Pickup'];
+  var html = '';
+  for (var i = 1; i <= 3; i++) {
+    if (i < current) html += '<div class="dot done" title="' + labels[i-1] + '"></div>';
+    else if (i === current) html += '<div class="dot current"></div>';
+    else html += '<div class="dot"></div>';
+    if (i < 3) html += '<div style="width:20px;height:1px;background:var(--gray-200)"></div>';
+  }
+  el.innerHTML = html;
+}
+
+// ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
+function writeToSheets(row) {
+  if (!SHEET_ID) {
+    console.log('Demo mode — row that would be saved:', row);
+    return;
+  }
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID +
+    '/values/' + SHEET_NAME + '!A1:H1:append?valueInputOption=USER_ENTERED&key=YOUR_API_KEY';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [row] })
+  }).then(function(r) {
+    if (!r.ok) console.error('Sheets write failed', r.status);
+  }).catch(function(e) {
+    console.error('Sheets error', e);
+  });
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 2500);
+}
+</script>
+</body>
+</html>
