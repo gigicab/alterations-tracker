@@ -206,6 +206,29 @@
   .count-num { font-size: 22px; font-weight: 600; color: var(--black); }
   .count-lbl { font-size: 10px; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 
+  /* GARMENT SELECTION */
+  .garment-screen { background: var(--white); }
+  .garment-header { padding: 24px 20px 8px; flex-shrink: 0; }
+  .garment-ticket-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .garment-ticket-num { font-family: var(--font-mono); font-size: 13px; color: var(--gray-600); background: var(--gray-100); padding: 4px 10px; border-radius: 20px; }
+  .garment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 20px; flex-shrink: 0; }
+  .garment-btn { background: var(--white); border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 16px 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.12s; -webkit-tap-highlight-color: transparent; }
+  .garment-btn:active { transform: scale(0.96); }
+  .garment-btn.selected { border-color: var(--black); border-width: 2px; background: var(--black); }
+  .garment-btn.selected .garment-label { color: var(--white); }
+  .garment-emoji { font-size: 32px; line-height: 1; }
+  .garment-label { font-size: 11px; font-weight: 500; color: var(--black); text-align: center; line-height: 1.3; font-family: var(--font-main); }
+  .garment-notes-section { padding: 4px 20px 12px; flex-shrink: 0; }
+  .garment-notes-label { font-size: 11px; font-weight: 500; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .garment-notes-input { width: 100%; padding: 12px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-family: var(--font-main); font-size: 14px; color: var(--black); outline: none; resize: none; height: 72px; }
+  .garment-notes-input:focus { border-color: var(--black); }
+  .garment-notes-input::placeholder { color: var(--gray-400); }
+  .garment-actions { padding: 0 20px 32px; display: flex; gap: 10px; flex-shrink: 0; }
+  .btn-skip { flex: 1; padding: 15px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-family: var(--font-main); font-size: 15px; font-weight: 500; color: var(--gray-600); cursor: pointer; }
+  .btn-next { flex: 2; padding: 15px; background: var(--black); border: none; border-radius: var(--radius-sm); font-family: var(--font-main); font-size: 15px; font-weight: 600; color: var(--white); cursor: pointer; }
+  .btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-next:not(:disabled):active { background: var(--black-soft); }
+
   .scan-frame-bottom { width: 260px; height: 0; position: relative; }
 </style>
 </head>
@@ -328,6 +351,58 @@
     </div>
   </div>
 
+  <!-- GARMENT SELECT -->
+  <div class="screen garment-screen" id="screen-garment">
+    <div class="garment-header">
+      <button class="back-btn" onclick="goToScan()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+        Back
+      </button>
+      <div class="screen-title">What type of garment?</div>
+      <div class="screen-sub">
+        <span class="garment-ticket-num" id="garment-ticket-display">—</span>
+      </div>
+    </div>
+    <div class="garment-grid">
+      <div class="garment-btn" onclick="selectGarment('Suit Jacket', this)">
+        <span class="garment-emoji">🧥</span>
+        <span class="garment-label">Suit Jacket</span>
+      </div>
+      <div class="garment-btn" onclick="selectGarment('Shirt / Blouse', this)">
+        <span class="garment-emoji">👔</span>
+        <span class="garment-label">Shirt / Blouse</span>
+      </div>
+      <div class="garment-btn" onclick="selectGarment('Pants', this)">
+        <span class="garment-emoji">👖</span>
+        <span class="garment-label">Pants</span>
+      </div>
+      <div class="garment-btn" onclick="selectGarment('Dress', this)">
+        <span class="garment-emoji">👗</span>
+        <span class="garment-label">Dress</span>
+      </div>
+      <div class="garment-btn" onclick="selectGarment('Skirt', this)">
+        <span class="garment-emoji">🩱</span>
+        <span class="garment-label">Skirt</span>
+      </div>
+      <div class="garment-btn" onclick="selectGarment('Coat / Outerwear', this)">
+        <span class="garment-emoji">🧣</span>
+        <span class="garment-label">Coat / Outerwear</span>
+      </div>
+      <div class="garment-btn" onclick="selectGarment('Other', this)">
+        <span class="garment-emoji">📦</span>
+        <span class="garment-label">Other</span>
+      </div>
+    </div>
+    <div class="garment-notes-section">
+      <div class="garment-notes-label">Notes (optional)</div>
+      <textarea class="garment-notes-input" id="garment-notes" placeholder="e.g. shorten sleeves 1 inch, take in waist..."></textarea>
+    </div>
+    <div class="garment-actions">
+      <button class="btn-skip" onclick="submitGarment(true)">Skip</button>
+      <button class="btn-next" id="btn-garment-next" onclick="submitGarment(false)" disabled>Confirm</button>
+    </div>
+  </div>
+
   <!-- CONFIRM -->
   <div class="screen confirm-screen" id="screen-confirm">
     <div class="confirm-body">
@@ -341,6 +416,8 @@
       <div class="confirm-card">
         <div class="confirm-row"><span class="confirm-label">Ticket #</span><span class="confirm-value" id="confirm-ticket">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Action</span><span class="confirm-pill" id="confirm-pill">Check In</span></div>
+        <div class="confirm-row" id="confirm-garment-row"><span class="confirm-label">Garment</span><span class="confirm-value plain" id="confirm-garment">—</span></div>
+        <div class="confirm-row" id="confirm-notes-row" style="display:none"><span class="confirm-label">Notes</span><span class="confirm-value plain" id="confirm-notes">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Sales Associate</span><span class="confirm-value plain" id="confirm-sa">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value plain" id="confirm-date">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value" id="confirm-time">—</span></div>
@@ -631,7 +708,36 @@ function submitManual() {
 }
 
 // ─── PROCESS TICKET ───────────────────────────────────────────────────────────
+var pendingTicket = null;
+
 function processTicket(ticketNumber) {
+  pendingTicket = ticketNumber;
+  if (state.pendingAction === 'checkin') {
+    document.getElementById('garment-ticket-display').textContent = ticketNumber;
+    document.getElementById('garment-notes').value = '';
+    document.querySelectorAll('.garment-btn').forEach(function(b){ b.classList.remove('selected'); });
+    document.getElementById('btn-garment-next').disabled = true;
+    state.selectedGarment = null;
+    showScreen('screen-garment');
+  } else {
+    finalizeTicket(ticketNumber, null, null);
+  }
+}
+
+function selectGarment(type, btn) {
+  document.querySelectorAll('.garment-btn').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  state.selectedGarment = type;
+  document.getElementById('btn-garment-next').disabled = false;
+}
+
+function submitGarment(skip) {
+  var garment = skip ? null : (state.selectedGarment || null);
+  var notes = document.getElementById('garment-notes').value.trim() || null;
+  finalizeTicket(pendingTicket, garment, notes);
+}
+
+function finalizeTicket(ticketNumber, garmentType, notes) {
   var action = state.pendingAction;
   var meta = ACTION_META[action];
   var now = new Date();
@@ -643,7 +749,8 @@ function processTicket(ticketNumber) {
     isoStr, ticketNumber, action, meta.actionLabel,
     state.currentSA ? state.currentSA.name : '',
     state.currentSA ? state.currentSA.id : '',
-    dateStr, timeStr
+    dateStr, timeStr,
+    garmentType || '', notes || ''
   ];
 
   writeToSheets(row);
@@ -653,8 +760,23 @@ function processTicket(ticketNumber) {
   document.getElementById('confirm-date').textContent = dateStr;
   document.getElementById('confirm-time').textContent = timeStr;
   document.getElementById('confirm-action-label').textContent = meta.actionLabel;
-  document.getElementById('confirm-title').textContent = meta.confirm.replace('\n', '\n');
   document.getElementById('confirm-title').innerHTML = meta.confirm.replace('\n', '<br>');
+
+  var garmentRow = document.getElementById('confirm-garment-row');
+  var notesRow = document.getElementById('confirm-notes-row');
+  if (garmentType) {
+    document.getElementById('confirm-garment').textContent = garmentType;
+    garmentRow.style.display = 'flex';
+  } else {
+    garmentRow.style.display = 'none';
+  }
+  if (notes) {
+    document.getElementById('confirm-notes').textContent = notes;
+    notesRow.style.display = 'flex';
+  } else {
+    notesRow.style.display = 'none';
+  }
+
   var pill = document.getElementById('confirm-pill');
   pill.textContent = meta.pill;
   pill.className = 'confirm-pill ' + meta.pillClass;
@@ -680,14 +802,16 @@ var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJWh3M5FsvbtWy2W
 
 function writeToSheets(row) {
   var payload = {
-    timestamp: row[0],
-    ticket:    row[1],
-    actionCode:row[2],
-    action:    row[3],
-    saName:    row[4],
-    saId:      row[5],
-    date:      row[6],
-    time:      row[7]
+    timestamp:   row[0],
+    ticket:      row[1],
+    actionCode:  row[2],
+    action:      row[3],
+    saName:      row[4],
+    saId:        row[5],
+    date:        row[6],
+    time:        row[7],
+    garmentType: row[8] || '',
+    notes:       row[9] || ''
   };
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
