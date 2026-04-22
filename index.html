@@ -175,6 +175,37 @@
 
 
 
+  /* STATUS SCREEN */
+  .status-header { padding: 24px 20px 12px; flex-shrink: 0; }
+  .status-filters { display: flex; gap: 8px; padding: 0 20px 12px; flex-shrink: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .status-filters::-webkit-scrollbar { display: none; }
+  .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--gray-200); background: var(--white); font-family: var(--font-main); font-size: 13px; font-weight: 500; color: var(--gray-600); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .filter-btn.active { background: var(--black); border-color: var(--black); color: var(--white); }
+  .filter-btn:active { opacity: 0.8; }
+  .status-search { margin: 0 20px 12px; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-family: var(--font-main); font-size: 14px; color: var(--black); outline: none; width: calc(100% - 40px); }
+  .status-search:focus { border-color: var(--black); }
+  .status-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 40px; display: flex; flex-direction: column; gap: 10px; }
+  .status-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 14px 16px; }
+  .status-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .status-ticket { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--black); }
+  .status-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.3px; white-space: nowrap; }
+  .sp-tailor { background: var(--amber-bg); color: var(--amber); }
+  .sp-ready { background: var(--green-bg); color: var(--green); }
+  .sp-closed { background: var(--gray-100); color: var(--gray-600); }
+  .status-card-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+  .status-meta-item { font-size: 12px; color: var(--gray-600); }
+  .status-meta-item span { font-weight: 500; color: var(--black); }
+  .status-days { font-size: 12px; font-weight: 600; }
+  .days-normal { color: var(--green); }
+  .days-warning { color: var(--amber); }
+  .days-late { color: var(--red); }
+  .status-empty { text-align: center; padding: 60px 20px; color: var(--gray-400); font-size: 14px; }
+  .status-loading { text-align: center; padding: 60px 20px; color: var(--gray-400); font-size: 14px; }
+  .status-counts { display: flex; gap: 10px; padding: 0 20px 12px; }
+  .count-card { flex: 1; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-xs); padding: 10px 12px; text-align: center; }
+  .count-num { font-size: 22px; font-weight: 600; color: var(--black); }
+  .count-lbl { font-size: 10px; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
   .scan-frame-bottom { width: 260px; height: 0; position: relative; }
 </style>
 </head>
@@ -234,6 +265,19 @@
         <div class="action-text">
           <div class="action-title">Customer Pickup</div>
           <div class="action-sub">Customer collecting garment</div>
+        </div>
+        <div class="action-arrow">›</div>
+      </div>
+      <div class="action-card" onclick="openStatus()">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <circle cx="3" cy="6" r="1" fill="#555"/><circle cx="3" cy="12" r="1" fill="#555"/><circle cx="3" cy="18" r="1" fill="#555"/>
+          </svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">View Status</div>
+          <div class="action-sub">Live garment tracker</div>
         </div>
         <div class="action-arrow">›</div>
       </div>
@@ -308,6 +352,29 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+  <!-- STATUS -->
+  <div class="screen" id="screen-status">
+    <div class="status-header">
+      <button class="back-btn" onclick="goHome()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+        Back
+      </button>
+      <div class="screen-title">Garment Status</div>
+      <div class="screen-sub" id="status-updated">Loading...</div>
+    </div>
+    <div class="status-counts" id="status-counts"></div>
+    <div class="status-filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('tailor', this)">In Tailor Room</button>
+      <button class="filter-btn" onclick="setFilter('ready', this)">Ready for Pickup</button>
+      <button class="filter-btn" onclick="setFilter('closed', this)">Closed</button>
+    </div>
+    <input class="status-search" id="status-search" type="text" placeholder="Search ticket number..." oninput="renderStatusList()" />
+    <div class="status-list" id="status-list">
+      <div class="status-loading">Loading garments...</div>
+    </div>
+  </div>
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
@@ -631,7 +698,124 @@ function writeToSheets(row) {
   });
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
+// ─── STATUS SCREEN ────────────────────────────────────────────────────────────
+var statusData = { garments: [], filter: 'all' };
+
+function openStatus() {
+  showScreen('screen-status');
+  loadStatusData();
+}
+
+function loadStatusData() {
+  var sheetId = '1fqYTZtjPGl9g8MW-Z4rT0txKd7BctjyeA6KeHNVkFLI';
+  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=Events';
+  document.getElementById('status-list').innerHTML = '<div class="status-loading">Loading garments...</div>';
+  fetch(url)
+    .then(function(r) { return r.text(); })
+    .then(function(csv) {
+      var rows = csv.trim().split('\n').slice(1);
+      var events = rows.map(function(row) {
+        var cols = row.split(',').map(function(c){ return c.replace(/^"|"$/g,'').trim(); });
+        return {
+          timestamp: cols[0], ticket: cols[1], actionCode: cols[2],
+          action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7]
+        };
+      }).filter(function(e){ return e.ticket; });
+
+      var map = {};
+      events.forEach(function(e) {
+        if (!map[e.ticket]) map[e.ticket] = { ticket: e.ticket, events: [] };
+        map[e.ticket].events.push(e);
+      });
+
+      statusData.garments = Object.values(map).map(function(g) {
+        var codes = g.events.map(function(e){ return e.actionCode; });
+        var status = 'tailor';
+        if (codes.indexOf('pickup') > -1) status = 'closed';
+        else if (codes.indexOf('complete') > -1) status = 'ready';
+        var checkinEvent = g.events.find(function(e){ return e.actionCode === 'checkin'; });
+        var completeEvent = g.events.find(function(e){ return e.actionCode === 'complete'; });
+        var pickupEvent = g.events.find(function(e){ return e.actionCode === 'pickup'; });
+        var checkinDate = checkinEvent ? new Date(checkinEvent.timestamp) : null;
+        var daysElapsed = checkinDate ? Math.floor((new Date() - checkinDate) / 86400000) : null;
+        var lastSA = g.events[g.events.length - 1].saName;
+        return {
+          ticket: g.ticket, status: status,
+          checkinDate: checkinEvent ? checkinEvent.date : '—',
+          completeDate: completeEvent ? completeEvent.date : null,
+          pickupDate: pickupEvent ? pickupEvent.date : null,
+          daysElapsed: daysElapsed, lastSA: lastSA
+        };
+      });
+
+      statusData.garments.sort(function(a, b){ return (b.daysElapsed||0) - (a.daysElapsed||0); });
+      var now = new Date();
+      document.getElementById('status-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+      renderStatusCounts();
+      renderStatusList();
+    })
+    .catch(function() {
+      document.getElementById('status-list').innerHTML = '<div class="status-empty">Could not load data. Check your connection.</div>';
+    });
+}
+
+function renderStatusCounts() {
+  var all = statusData.garments;
+  var tailor = all.filter(function(g){ return g.status === 'tailor'; }).length;
+  var ready = all.filter(function(g){ return g.status === 'ready'; }).length;
+  var closed = all.filter(function(g){ return g.status === 'closed'; }).length;
+  document.getElementById('status-counts').innerHTML =
+    countCard(tailor, 'In Room') +
+    countCard(ready, 'Ready') +
+    countCard(closed, 'Closed');
+}
+
+function countCard(n, label) {
+  return '<div class="count-card"><div class="count-num">' + n + '</div><div class="count-lbl">' + label + '</div></div>';
+}
+
+function setFilter(filter, btn) {
+  statusData.filter = filter;
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderStatusList();
+}
+
+function renderStatusList() {
+  var search = (document.getElementById('status-search').value || '').toLowerCase();
+  var list = statusData.garments.filter(function(g) {
+    var matchFilter = statusData.filter === 'all' || g.status === statusData.filter;
+    var matchSearch = !search || g.ticket.toLowerCase().indexOf(search) > -1;
+    return matchFilter && matchSearch;
+  });
+
+  if (list.length === 0) {
+    document.getElementById('status-list').innerHTML = '<div class="status-empty">No garments found.</div>';
+    return;
+  }
+
+  var html = '';
+  list.forEach(function(g) {
+    var pillClass = g.status === 'tailor' ? 'sp-tailor' : g.status === 'ready' ? 'sp-ready' : 'sp-closed';
+    var pillLabel = g.status === 'tailor' ? 'In Tailor Room' : g.status === 'ready' ? 'Ready for Pickup' : 'Closed';
+    var daysClass = g.daysElapsed === null ? '' : g.daysElapsed <= 3 ? 'days-normal' : g.daysElapsed <= 7 ? 'days-warning' : 'days-late';
+    var daysLabel = g.daysElapsed === null ? '' : g.daysElapsed === 0 ? 'Today' : g.daysElapsed === 1 ? '1 day' : g.daysElapsed + ' days';
+    html += '<div class="status-card">' +
+      '<div class="status-card-top">' +
+        '<span class="status-ticket">' + g.ticket + '</span>' +
+        '<span class="status-pill ' + pillClass + '">' + pillLabel + '</span>' +
+      '</div>' +
+      '<div class="status-card-meta">' +
+        '<div class="status-meta-item">Checked in <span>' + g.checkinDate + '</span></div>' +
+        (g.completeDate ? '<div class="status-meta-item">Complete <span>' + g.completeDate + '</span></div>' : '') +
+        (g.pickupDate ? '<div class="status-meta-item">Picked up <span>' + g.pickupDate + '</span></div>' : '') +
+        '<div class="status-meta-item">SA <span>' + g.lastSA + '</span></div>' +
+        (daysLabel ? '<div class="status-days ' + daysClass + '">' + daysLabel + ' in system</div>' : '') +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('status-list').innerHTML = html;
+}
 function showToast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
