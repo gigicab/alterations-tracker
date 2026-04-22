@@ -361,29 +361,31 @@ function updateHomeDate() {
 }
 
 function loadSAList() {
-  if (SHEET_ID) {
-    fetchSAListFromSheets();
-  } else {
-    state.saList = DEMO_SAS;
-    renderSAList();
-  }
+  fetchSAListFromSheets();
 }
 
 function fetchSAListFromSheets() {
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + SA_SHEET_NAME + '?key=YOUR_API_KEY';
-  fetch(url).then(function(r){ return r.json(); }).then(function(data) {
-    if (data.values && data.values.length > 1) {
-      state.saList = data.values.slice(1).map(function(row) {
-        return { name: row[0] || '', id: row[1] || '' };
-      });
-    } else {
+  var sheetId = '1fqYTZtjPGl9g8MW-Z4rT0txKd7BctjyeA6KeHNVkFLI';
+  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=SA_List';
+  fetch(url)
+    .then(function(r) { return r.text(); })
+    .then(function(csv) {
+      var rows = csv.trim().split('\n').slice(1);
+      var list = rows.map(function(row) {
+        var cols = row.split(',').map(function(c) { return c.replace(/^"|"$/g, '').trim(); });
+        return { name: cols[0] || '', id: cols[1] || '' };
+      }).filter(function(sa) { return sa.name; });
+      if (list.length > 0) {
+        state.saList = list;
+      } else {
+        state.saList = DEMO_SAS;
+      }
+      renderSAList();
+    })
+    .catch(function() {
       state.saList = DEMO_SAS;
-    }
-    renderSAList();
-  }).catch(function() {
-    state.saList = DEMO_SAS;
-    renderSAList();
-  });
+      renderSAList();
+    });
 }
 
 function renderSAList() {
