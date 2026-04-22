@@ -216,7 +216,8 @@
   .garment-btn:active { transform: scale(0.96); }
   .garment-btn.selected { border-color: var(--black); border-width: 2px; background: var(--black); }
   .garment-btn.selected .garment-label { color: var(--white); }
-  .garment-emoji { font-size: 32px; line-height: 1; }
+  .garment-emoji { font-size: 32px; line-height: 1; color: var(--black); display: flex; align-items: center; justify-content: center; height: 38px; }
+  .garment-btn.selected .garment-emoji { color: var(--white); }
   .garment-label { font-size: 11px; font-weight: 500; color: var(--black); text-align: center; line-height: 1.3; font-family: var(--font-main); }
   .garment-notes-section { padding: 4px 20px 12px; flex-shrink: 0; }
   .garment-notes-label { font-size: 11px; font-weight: 500; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
@@ -365,7 +366,16 @@
     </div>
     <div class="garment-grid">
       <div class="garment-btn" onclick="selectGarment('Suit Jacket', this)">
-        <span class="garment-emoji">🧥</span>
+        <span class="garment-emoji">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 8L10 4L14 10L18 7L22 10L26 4L32 8L30 32H6L4 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+            <path d="M14 10L16 16L18 13L20 16L22 10" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+            <path d="M10 4L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M26 4L26 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="18" cy="21" r="1.2" fill="currentColor"/>
+            <circle cx="18" cy="25.5" r="1.2" fill="currentColor"/>
+          </svg>
+        </span>
         <span class="garment-label">Suit Jacket</span>
       </div>
       <div class="garment-btn" onclick="selectGarment('Shirt / Blouse', this)">
@@ -381,15 +391,33 @@
         <span class="garment-label">Dress</span>
       </div>
       <div class="garment-btn" onclick="selectGarment('Skirt', this)">
-        <span class="garment-emoji">🩱</span>
+        <span class="garment-emoji">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 6H24V10L28 32H8L12 10V6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+            <line x1="11" y1="10" x2="25" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M14 10L11 32" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+            <path d="M22 10L25 32" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+          </svg>
+        </span>
         <span class="garment-label">Skirt</span>
       </div>
       <div class="garment-btn" onclick="selectGarment('Coat / Outerwear', this)">
-        <span class="garment-emoji">🧣</span>
+        <span class="garment-emoji">🧥</span>
         <span class="garment-label">Coat / Outerwear</span>
       </div>
       <div class="garment-btn" onclick="selectGarment('Other', this)">
-        <span class="garment-emoji">📦</span>
+        <span class="garment-emoji">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="26" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+            <circle cx="10" cy="18" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+            <line x1="10" y1="21" x2="10" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12.5" y1="24.5" x2="28" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M24 8L29 8L29 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="8" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="8" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="8" y1="16" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
         <span class="garment-label">Other</span>
       </div>
     </div>
