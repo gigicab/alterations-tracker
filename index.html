@@ -7,11 +7,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Alterations">
 <title>Alterations Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
 <style>
+  @font-face { font-family: 'Avenir'; src: local('Avenir'), local('Avenir Next'), local('AvenirNext-Regular'); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   :root {
+    --font-main: 'Avenir Next', 'Avenir', 'Century Gothic', 'Trebuchet MS', sans-serif;
+    --font-mono: 'Courier New', monospace;
     --black: #000000;
     --black-soft: #111111;
     --white: #ffffff;
@@ -33,12 +35,12 @@
     --radius-sm: 12px;
     --radius-xs: 8px;
   }
-  html, body { height: 100%; background: var(--white); font-family: 'DM Sans', sans-serif; color: var(--black); overflow: hidden; }
+  html, body { height: 100%; background: var(--white); font-family: var(--font-main); color: var(--black); overflow: hidden; }
   .app { display: flex; flex-direction: column; height: 100vh; max-width: 430px; margin: 0 auto; position: relative; overflow: hidden; }
 
   /* TOPBAR */
   .topbar { background: var(--black); padding: 52px 24px 20px; flex-shrink: 0; }
-  .topbar-store { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 400; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+  .topbar-store { font-family: var(--font-main); font-size: 13px; font-weight: 500; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; }
   .topbar-title { font-size: 18px; font-weight: 500; color: var(--white); }
   .topbar-row { display: flex; align-items: flex-end; justify-content: space-between; }
   .topbar-sa { text-align: right; }
@@ -53,8 +55,8 @@
 
   /* HOME SCREEN */
   .home-greeting { padding: 28px 20px 8px; }
-  .home-date { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
-  .home-headline { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; color: var(--black); line-height: 1.25; }
+  .home-date { font-size: 12px; color: var(--gray-400); font-family: var(--font-mono); margin-bottom: 6px; }
+  .home-headline { font-family: var(--font-main); font-size: 26px; font-weight: 600; color: var(--black); line-height: 1.25; }
 
   .action-cards { padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 12px; }
   .action-card {
@@ -83,9 +85,9 @@
 
   /* SA SELECT SCREEN */
   .screen-header { padding: 24px 20px 8px; flex-shrink: 0; }
-  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--gray-600); cursor: pointer; margin-bottom: 20px; background: none; border: none; font-family: 'DM Sans', sans-serif; padding: 0; }
+  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--gray-600); cursor: pointer; margin-bottom: 20px; background: none; border: none; font-family: var(--font-main); padding: 0; }
   .back-btn svg { width: 16px; height: 16px; }
-  .screen-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 400; color: var(--black); margin-bottom: 4px; }
+  .screen-title { font-family: var(--font-main); font-size: 24px; font-weight: 600; color: var(--black); margin-bottom: 4px; }
   .screen-sub { font-size: 13px; color: var(--gray-600); }
 
   .sa-list { padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
@@ -102,7 +104,7 @@
   .sa-info { flex: 1; }
   .sa-name { font-size: 15px; font-weight: 500; color: var(--black); }
   .sa-item.selected .sa-name { color: var(--white); }
-  .sa-id { font-size: 12px; color: var(--gray-600); margin-top: 1px; font-family: 'DM Mono', monospace; }
+  .sa-id { font-size: 12px; color: var(--gray-600); margin-top: 1px; font-family: var(--font-mono); }
   .sa-item.selected .sa-id { color: var(--gray-400); }
   .sa-check { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; }
   .sa-item.selected .sa-check { display: flex; }
@@ -114,7 +116,7 @@
   .scan-back { background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .scan-back svg { width: 16px; height: 16px; stroke: white; }
   .scan-action-label { font-size: 13px; font-weight: 500; color: var(--white); }
-  .scan-sa-label { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; }
+  .scan-sa-label { font-size: 12px; color: var(--gray-400); font-family: var(--font-mono); }
 
   .scan-viewport { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
   #scanner-video { width: 100%; height: 100%; object-fit: cover; }
@@ -135,10 +137,10 @@
   .manual-divider span { font-size: 11px; color: var(--gray-600); }
   .manual-divider::before, .manual-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
   .manual-row { display: flex; gap: 8px; }
-  .manual-input { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-xs); padding: 13px 14px; font-size: 15px; font-family: 'DM Mono', monospace; color: var(--white); outline: none; }
+  .manual-input { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-xs); padding: 13px 14px; font-size: 15px; font-family: var(--font-mono); color: var(--white); outline: none; }
   .manual-input::placeholder { color: var(--gray-600); }
   .manual-input:focus { border-color: var(--accent); }
-  .manual-submit { background: var(--accent); border: none; border-radius: var(--radius-xs); padding: 13px 18px; font-size: 14px; font-weight: 600; color: var(--black); cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  .manual-submit { background: var(--accent); border: none; border-radius: var(--radius-xs); padding: 13px 18px; font-size: 14px; font-weight: 600; color: var(--black); cursor: pointer; font-family: var(--font-main); white-space: nowrap; }
   .manual-submit:active { opacity: 0.85; }
 
   /* CONFIRM SCREEN */
@@ -148,13 +150,13 @@
   .confirm-icon.success { background: var(--green-bg); }
   .confirm-icon svg { width: 36px; height: 36px; }
   .confirm-action { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-400); margin-bottom: 8px; }
-  .confirm-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; color: var(--black); text-align: center; margin-bottom: 32px; line-height: 1.3; }
+  .confirm-title { font-family: var(--font-main); font-size: 28px; font-weight: 600; color: var(--black); text-align: center; margin-bottom: 32px; line-height: 1.3; }
   .confirm-card { width: 100%; background: var(--gray-50); border-radius: var(--radius-sm); border: 1px solid var(--gray-200); overflow: hidden; margin-bottom: 32px; }
   .confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--gray-200); }
   .confirm-row:last-child { border-bottom: none; }
   .confirm-label { font-size: 12px; color: var(--gray-600); }
-  .confirm-value { font-size: 13px; font-weight: 500; color: var(--black); font-family: 'DM Mono', monospace; }
-  .confirm-value.plain { font-family: 'DM Sans', sans-serif; }
+  .confirm-value { font-size: 13px; font-weight: 500; color: var(--black); font-family: var(--font-mono); }
+  .confirm-value.plain { font-family: var(--font-main); }
   .confirm-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.3px; }
   .pill-checkin { background: var(--amber-bg); color: var(--amber); }
   .pill-complete { background: var(--green-bg); color: var(--green); }
@@ -164,7 +166,7 @@
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); }
   .dot.done { background: var(--green); }
   .dot.current { background: var(--black); width: 24px; border-radius: 4px; }
-  .btn-done { width: 100%; padding: 16px; background: var(--black); color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.3px; }
+  .btn-done { width: 100%; padding: 16px; background: var(--black); color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; font-family: var(--font-main); cursor: pointer; letter-spacing: 0.3px; }
   .btn-done:active { background: var(--black-soft); }
 
   /* TOAST */
@@ -309,9 +311,6 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-// To connect to Google Sheets, replace SHEET_ID and SHEET_NAME below.
-// Leave SHEET_ID empty to run in demo mode (no data is saved).
-var SHEET_ID = '';
 var SHEET_NAME = 'Events';
 var SA_SHEET_NAME = 'SA_List';
 
@@ -469,16 +468,43 @@ function goToScan() {
   document.getElementById('scan-sa-label').textContent = state.currentSA ? state.currentSA.name : '';
   document.getElementById('manual-input').value = '';
   showScreen('screen-scan');
-  startScanner();
+  setScanHint('Starting camera...');
+  waitForZXingThenScan(0);
+}
+
+function waitForZXingThenScan(attempts) {
+  if (typeof ZXing !== 'undefined') {
+    startScanner();
+  } else if (attempts < 20) {
+    setScanHint('Loading scanner' + (attempts > 3 ? '...' : '.'));
+    setTimeout(function() { waitForZXingThenScan(attempts + 1); }, 500);
+  } else {
+    setScanHint('Camera unavailable — use manual entry below');
+  }
+}
+
+function setScanHint(text) {
+  var el = document.querySelector('.scan-hint');
+  if (el) el.textContent = text;
 }
 
 // ─── SCANNER ──────────────────────────────────────────────────────────────────
 function startScanner() {
   if (state.scanning) return;
-  if (typeof ZXing === 'undefined') {
-    console.log('ZXing not loaded, manual entry only');
-    return;
-  }
+  setScanHint('Starting camera...');
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      beginZXingScan();
+    })
+    .catch(function(err) {
+      console.log('Camera permission denied:', err);
+      setScanHint('Camera access denied — use manual entry below');
+    });
+}
+
+function beginZXingScan() {
   try {
     var hints = new Map();
     var formats = [
@@ -491,6 +517,7 @@ function startScanner() {
     state.scanner = new ZXing.BrowserMultiFormatReader(hints);
     var videoEl = document.getElementById('scanner-video');
     state.scanning = true;
+    setScanHint('Point at alteration ticket barcode');
     state.scanner.decodeFromConstraints(
       { video: { facingMode: 'environment' } },
       videoEl,
@@ -502,10 +529,14 @@ function startScanner() {
             processTicket(text.trim());
           }
         }
+        if (err && !(err instanceof ZXing.NotFoundException)) {
+          console.log('Scan error:', err);
+        }
       }
     );
   } catch(e) {
     console.log('Scanner error:', e);
+    setScanHint('Camera error — use manual entry below');
   }
 }
 
@@ -574,22 +605,27 @@ function renderProgressDots(current) {
   el.innerHTML = html;
 }
 
-// ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
+// ─── GOOGLE SHEETS VIA APPS SCRIPT ───────────────────────────────────────────
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJWh3M5FsvbtWy2W7gu9epmMsQPljvFrfYtX6x7-v6M0IiW_nb88g8B1_19lnXV3hV/exec';
+
 function writeToSheets(row) {
-  if (!SHEET_ID) {
-    console.log('Demo mode — row that would be saved:', row);
-    return;
-  }
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID +
-    '/values/' + SHEET_NAME + '!A1:H1:append?valueInputOption=USER_ENTERED&key=YOUR_API_KEY';
-  fetch(url, {
+  var payload = {
+    timestamp: row[0],
+    ticket:    row[1],
+    actionCode:row[2],
+    action:    row[3],
+    saName:    row[4],
+    saId:      row[5],
+    date:      row[6],
+    time:      row[7]
+  };
+  fetch(APPS_SCRIPT_URL, {
     method: 'POST',
+    mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values: [row] })
-  }).then(function(r) {
-    if (!r.ok) console.error('Sheets write failed', r.status);
+    body: JSON.stringify(payload)
   }).catch(function(e) {
-    console.error('Sheets error', e);
+    console.error('Sheets write error:', e);
   });
 }
 
