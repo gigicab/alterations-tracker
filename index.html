@@ -851,7 +851,8 @@ function loadStatusData() {
         var cols = row.split(',').map(function(c){ return c.replace(/^"|"$/g,'').trim(); });
         return {
           timestamp: cols[0], ticket: cols[1], actionCode: cols[2],
-          action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7]
+          action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7],
+          garmentType: cols[8] || '', notes: cols[9] || ''
         };
       }).filter(function(e){ return e.ticket; });
 
@@ -877,12 +878,15 @@ function loadStatusData() {
         var checkinDate = checkinEvent ? new Date(checkinEvent.timestamp) : null;
         var daysElapsed = checkinDate ? Math.floor((new Date() - checkinDate) / 86400000) : null;
         var lastSA = g.events[g.events.length - 1].saName;
+        var garmentType = checkinEvent ? (checkinEvent.garmentType || '') : '';
+        var notes = checkinEvent ? (checkinEvent.notes || '') : '';
         return {
           ticket: g.ticket, status: status,
           checkinDate: checkinEvent ? checkinEvent.date : '—',
           completeDate: completeEvent ? completeEvent.date : null,
           pickupDate: pickupEvent ? pickupEvent.date : null,
-          daysElapsed: daysElapsed, lastSA: lastSA
+          daysElapsed: daysElapsed, lastSA: lastSA,
+          garmentType: garmentType, notes: notes
         };
       });
 
@@ -937,18 +941,20 @@ function renderStatusList() {
     var pillClass = g.status === 'tailor' ? 'sp-tailor' : g.status === 'ready' ? 'sp-ready' : 'sp-closed';
     var pillLabel = g.status === 'tailor' ? 'In Tailor Room' : g.status === 'ready' ? 'Ready for Pickup' : 'Closed';
     var daysClass = g.daysElapsed === null ? '' : g.daysElapsed <= 3 ? 'days-normal' : g.daysElapsed <= 7 ? 'days-warning' : 'days-late';
-    var daysLabel = g.daysElapsed === null ? '' : g.daysElapsed === 0 ? 'Today' : g.daysElapsed === 1 ? '1 day' : g.daysElapsed + ' days';
+    var daysLabel = g.daysElapsed === null ? '' : g.daysElapsed === 0 ? 'Checked in today' : g.daysElapsed === 1 ? '1 day in system' : g.daysElapsed + ' days in system';
     html += '<div class="status-card">' +
       '<div class="status-card-top">' +
         '<span class="status-ticket">' + g.ticket + '</span>' +
         '<span class="status-pill ' + pillClass + '">' + pillLabel + '</span>' +
       '</div>' +
       '<div class="status-card-meta">' +
+        (g.garmentType ? '<div class="status-meta-item" style="width:100%">Garment <span>' + g.garmentType + '</span></div>' : '') +
         '<div class="status-meta-item">Checked in <span>' + g.checkinDate + '</span></div>' +
         (g.completeDate ? '<div class="status-meta-item">Complete <span>' + g.completeDate + '</span></div>' : '') +
         (g.pickupDate ? '<div class="status-meta-item">Picked up <span>' + g.pickupDate + '</span></div>' : '') +
         '<div class="status-meta-item">SA <span>' + g.lastSA + '</span></div>' +
-        (daysLabel ? '<div class="status-days ' + daysClass + '">' + daysLabel + ' in system</div>' : '') +
+        (daysLabel ? '<div class="status-days ' + daysClass + '">' + daysLabel + '</div>' : '') +
+        (g.notes ? '<div class="status-meta-item" style="width:100%;margin-top:4px;padding-top:8px;border-top:1px solid var(--gray-200)">Notes <span>' + g.notes + '</span></div>' : '') +
       '</div>' +
     '</div>';
   });
