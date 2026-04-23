@@ -528,10 +528,17 @@ function fetchTailorListFromSheets() {
     .then(function(r) { return r.text(); })
     .then(function(csv) {
       var rows = csv.trim().split('\n').slice(1);
+      var seen = {};
       var list = rows.map(function(row) {
         var cols = parseCSVRow(row);
-        return { name: cols[0] || '', id: cols[1] || '' };
-      }).filter(function(t) { return t.name; });
+        return { name: (cols[0] || '').trim(), id: (cols[1] || '').trim() };
+      }).filter(function(t) {
+        if (!t.name) return false;
+        var key = t.name + '|' + t.id;
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
       state.tailorList = list.length > 0 ? list : [];
       renderTailorList();
     })
@@ -543,7 +550,7 @@ function renderTailorList() {
   if (!el) return;
   el.innerHTML = '';
   state.tailorList.forEach(function(tailor) {
-    var isSelected = state.currentTailor && state.currentTailor.name === tailor.name;
+    var isSelected = state.currentTailor && state.currentTailor.name === tailor.name && state.currentTailor.id === tailor.id;
     var initials = tailor.name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
     var div = document.createElement('div');
     div.className = 'sa-item' + (isSelected ? ' selected' : '');
@@ -569,10 +576,17 @@ function fetchSAListFromSheets() {
     .then(function(r) { return r.text(); })
     .then(function(csv) {
       var rows = csv.trim().split('\n').slice(1);
+      var seen = {};
       var list = rows.map(function(row) {
         var cols = parseCSVRow(row);
-        return { name: cols[0] || '', id: cols[1] || '' };
-      }).filter(function(sa) { return sa.name; });
+        return { name: (cols[0] || '').trim(), id: (cols[1] || '').trim() };
+      }).filter(function(sa) {
+        if (!sa.name) return false;
+        var key = sa.name + '|' + sa.id;
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
       if (list.length > 0) {
         state.saList = list;
       } else {
@@ -590,7 +604,7 @@ function renderSAList() {
   var el = document.getElementById('sa-list');
   el.innerHTML = '';
   state.saList.forEach(function(sa) {
-    var isSelected = state.currentSA && state.currentSA.name === sa.name;
+    var isSelected = state.currentSA && state.currentSA.name === sa.name && state.currentSA.id === sa.id;
     var initials = sa.name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
     var div = document.createElement('div');
     div.className = 'sa-item' + (isSelected ? ' selected' : '');
