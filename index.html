@@ -321,6 +321,19 @@
     <div class="sa-list" id="sa-list"></div>
   </div>
 
+  <!-- TAILOR SELECT -->
+  <div class="screen" id="screen-tailor">
+    <div class="screen-header">
+      <button class="back-btn" onclick="goToScan()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+        Back
+      </button>
+      <div class="screen-title">Which tailor?</div>
+      <div class="screen-sub">Select the tailor who completed this garment</div>
+    </div>
+    <div class="sa-list" id="tailor-list"></div>
+  </div>
+
   <!-- SCAN -->
   <div class="screen scan-screen" id="screen-scan">
     <div class="scan-topbar">
@@ -416,6 +429,7 @@
         <div class="confirm-row" id="confirm-garment-row"><span class="confirm-label">Garment</span><span class="confirm-value plain" id="confirm-garment">—</span></div>
         <div class="confirm-row" id="confirm-notes-row" style="display:none"><span class="confirm-label">Notes</span><span class="confirm-value plain" id="confirm-notes">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Sales Associate</span><span class="confirm-value plain" id="confirm-sa">—</span></div>
+        <div class="confirm-row" id="confirm-tailor-row" style="display:none"><span class="confirm-label">Tailor</span><span class="confirm-value plain" id="confirm-tailor">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value plain" id="confirm-date">—</span></div>
         <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value" id="confirm-time">—</span></div>
       </div>
@@ -468,7 +482,9 @@ var DEMO_SAS = [
 // ─── STATE ────────────────────────────────────────────────────────────────────
 var state = {
   saList: [],
+  tailorList: [],
   currentSA: JSON.parse(localStorage.getItem('currentSA') || 'null'),
+  currentTailor: null,
   pendingAction: null,
   scanner: null,
   scanning: false
@@ -504,6 +520,48 @@ function updateHomeDate() {
 
 function loadSAList() {
   fetchSAListFromSheets();
+  fetchTailorListFromSheets();
+}
+
+function fetchTailorListFromSheets() {
+  var sheetId = '1fqYTZtjPGl9g8MW-Z4rT0txKd7BctjyeA6KeHNVkFLI';
+  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=Tailor_List';
+  fetch(url)
+    .then(function(r) { return r.text(); })
+    .then(function(csv) {
+      var rows = csv.trim().split('\n').slice(1);
+      var list = rows.map(function(row) {
+        var cols = parseCSVRow(row);
+        return { name: cols[0] || '', id: cols[1] || '' };
+      }).filter(function(t) { return t.name; });
+      state.tailorList = list.length > 0 ? list : [];
+      renderTailorList();
+    })
+    .catch(function() { state.tailorList = []; });
+}
+
+function renderTailorList() {
+  var el = document.getElementById('tailor-list');
+  if (!el) return;
+  el.innerHTML = '';
+  state.tailorList.forEach(function(tailor) {
+    var isSelected = state.currentTailor && state.currentTailor.name === tailor.name;
+    var initials = tailor.name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+    var div = document.createElement('div');
+    div.className = 'sa-item' + (isSelected ? ' selected' : '');
+    div.innerHTML =
+      '<div class="sa-avatar" style="background:var(--amber-bg);color:var(--amber)">' + initials + '</div>' +
+      '<div class="sa-info"><div class="sa-name">' + tailor.name + '</div><div class="sa-id">' + tailor.id + '</div></div>' +
+      '<div class="sa-check"><svg viewBox="0 0 11 11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M2 5.5l2.5 2.5 4.5-4.5"/></svg></div>';
+    div.onclick = function() { selectTailor(tailor); };
+    el.appendChild(div);
+  });
+}
+
+function selectTailor(tailor) {
+  state.currentTailor = tailor;
+  renderTailorList();
+  setTimeout(function() { finalizeTicket(pendingTicket, null, null); }, 200);
 }
 
 function fetchSAListFromSheets() {
@@ -716,6 +774,10 @@ function processTicket(ticketNumber) {
     document.getElementById('btn-garment-next').disabled = true;
     state.selectedGarment = null;
     showScreen('screen-garment');
+  } else if (state.pendingAction === 'complete') {
+    state.currentTailor = null;
+    renderTailorList();
+    showScreen('screen-tailor');
   } else {
     finalizeTicket(ticketNumber, null, null);
   }
@@ -747,7 +809,9 @@ function finalizeTicket(ticketNumber, garmentType, notes) {
     state.currentSA ? state.currentSA.name : '',
     state.currentSA ? state.currentSA.id : '',
     dateStr, timeStr,
-    garmentType || '', notes || ''
+    garmentType || '', notes || '',
+    state.currentTailor ? state.currentTailor.name : '',
+    state.currentTailor ? state.currentTailor.id : ''
   ];
 
   writeToSheets(row);
@@ -761,23 +825,28 @@ function finalizeTicket(ticketNumber, garmentType, notes) {
 
   var garmentRow = document.getElementById('confirm-garment-row');
   var notesRow = document.getElementById('confirm-notes-row');
+  var tailorRow = document.getElementById('confirm-tailor-row');
+
   if (garmentType) {
     document.getElementById('confirm-garment').textContent = garmentType;
     garmentRow.style.display = 'flex';
-  } else {
-    garmentRow.style.display = 'none';
-  }
+  } else { garmentRow.style.display = 'none'; }
+
   if (notes) {
     document.getElementById('confirm-notes').textContent = notes;
     notesRow.style.display = 'flex';
-  } else {
-    notesRow.style.display = 'none';
-  }
+  } else { notesRow.style.display = 'none'; }
+
+  if (state.currentTailor) {
+    document.getElementById('confirm-tailor').textContent = state.currentTailor.name;
+    tailorRow.style.display = 'flex';
+  } else { tailorRow.style.display = 'none'; }
 
   var pill = document.getElementById('confirm-pill');
   pill.textContent = meta.pill;
   pill.className = 'confirm-pill ' + meta.pillClass;
   renderProgressDots(meta.dot);
+  state.currentTailor = null;
   showScreen('screen-confirm');
 }
 
@@ -795,7 +864,7 @@ function renderProgressDots(current) {
 }
 
 // ─── GOOGLE SHEETS VIA APPS SCRIPT ───────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSZrp-ouNcbbKmacmsrT2WEGhIQk219cv8ni5wp0XPF8Kd8sDhLalgtd0k_WRM0Wiu/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxrYTz5q4yoVH6oyBln-Wi9qieTPaRPW7qtfg6OR3CuxW86V0gImnAWnSpkbDwSOcf/exec';
 
 function writeToSheets(row) {
   var payload = {
@@ -808,7 +877,9 @@ function writeToSheets(row) {
     date:        row[6],
     time:        row[7],
     garmentType: row[8] || '',
-    notes:       row[9] || ''
+    notes:       row[9] || '',
+    tailorName:  row[10] || '',
+    tailorId:    row[11] || ''
   };
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
@@ -873,7 +944,8 @@ function loadStatusData() {
         return {
           timestamp: cols[0], ticket: cols[1], actionCode: cols[2],
           action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7],
-          garmentType: cols[8] || '', notes: cols[9] || ''
+          garmentType: cols[8] || '', notes: cols[9] || '',
+          tailorName: cols[10] || '', tailorId: cols[11] || ''
         };
       }).filter(function(e){ return e.ticket; });
 
@@ -901,13 +973,14 @@ function loadStatusData() {
         var lastSA = g.events[g.events.length - 1].saName;
         var garmentType = checkinEvent ? (checkinEvent.garmentType || '') : '';
         var notes = checkinEvent ? (checkinEvent.notes || '') : '';
+        var tailor = completeEvent ? (completeEvent.tailorName || '') : '';
         return {
           ticket: g.ticket, status: status,
           checkinDate: checkinEvent ? checkinEvent.date : '—',
           completeDate: completeEvent ? completeEvent.date : null,
           pickupDate: pickupEvent ? pickupEvent.date : null,
           daysElapsed: daysElapsed, lastSA: lastSA,
-          garmentType: garmentType, notes: notes
+          garmentType: garmentType, notes: notes, tailor: tailor
         };
       });
 
@@ -972,6 +1045,7 @@ function renderStatusList() {
         (g.garmentType ? '<div class="status-meta-item" style="width:100%">Garment <span>' + g.garmentType + '</span></div>' : '') +
         '<div class="status-meta-item">Checked in <span>' + g.checkinDate + '</span></div>' +
         (g.completeDate ? '<div class="status-meta-item">Complete <span>' + g.completeDate + '</span></div>' : '') +
+        (g.tailor ? '<div class="status-meta-item">Tailor <span>' + g.tailor + '</span></div>' : '') +
         (g.pickupDate ? '<div class="status-meta-item">Picked up <span>' + g.pickupDate + '</span></div>' : '') +
         '<div class="status-meta-item">SA <span>' + g.lastSA + '</span></div>' +
         (daysLabel ? '<div class="status-days ' + daysClass + '">' + daysLabel + '</div>' : '') +
