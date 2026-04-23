@@ -800,19 +800,17 @@ function finalizeTicket(ticketNumber, garmentType, notes) {
   var now = new Date();
   var dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   var timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  var isoStr = now.toISOString();
 
-  var row = [
-    isoStr, ticketNumber, action, meta.actionLabel,
-    state.currentSA ? state.currentSA.name : '',
-    state.currentSA ? state.currentSA.id : '',
-    dateStr, timeStr,
-    garmentType || '', notes || '',
-    state.currentTailor ? state.currentTailor.name : '',
-    state.currentTailor ? state.currentTailor.id : ''
-  ];
-
-  writeToSheets(row);
+  writeToSheets(action, ticketNumber, {
+    date:        dateStr,
+    time:        timeStr,
+    saName:      state.currentSA ? state.currentSA.name : '',
+    saId:        state.currentSA ? state.currentSA.id : '',
+    garmentType: garmentType || '',
+    notes:       notes || '',
+    tailorName:  state.currentTailor ? state.currentTailor.name : '',
+    tailorId:    state.currentTailor ? state.currentTailor.id : ''
+  });
 
   document.getElementById('confirm-ticket').textContent = ticketNumber;
   document.getElementById('confirm-sa').textContent = state.currentSA ? state.currentSA.name : '—';
@@ -862,22 +860,20 @@ function renderProgressDots(current) {
 }
 
 // ─── GOOGLE SHEETS VIA APPS SCRIPT ───────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxrYTz5q4yoVH6oyBln-Wi9qieTPaRPW7qtfg6OR3CuxW86V0gImnAWnSpkbDwSOcf/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzsxfSfmhztGA28SfQix6VPxfmlwxVM3L3hEYvTedf43MyH24bOAMk0qEWdzDFZS6LR/exec';
 
-function writeToSheets(row) {
+function writeToSheets(action, ticketNumber, data) {
   var payload = {
-    timestamp:   row[0],
-    ticket:      row[1],
-    actionCode:  row[2],
-    action:      row[3],
-    saName:      row[4],
-    saId:        row[5],
-    date:        row[6],
-    time:        row[7],
-    garmentType: row[8] || '',
-    notes:       row[9] || '',
-    tailorName:  row[10] || '',
-    tailorId:    row[11] || ''
+    actionCode:  action,
+    ticket:      ticketNumber,
+    date:        data.date,
+    time:        data.time,
+    saName:      data.saName || '',
+    saId:        data.saId || '',
+    garmentType: data.garmentType || '',
+    notes:       data.notes || '',
+    tailorName:  data.tailorName || '',
+    tailorId:    data.tailorId || ''
   };
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
@@ -934,53 +930,54 @@ function loadStatusData() {
       }
       var rows = csv.trim().split('\n').slice(1);
       if (rows.length === 0 || (rows.length === 1 && rows[0].trim() === '')) {
-        document.getElementById('status-list').innerHTML = '<div class="status-empty">No events recorded yet. Do a test scan first.</div>';
-        return;
-      }
-      var events = rows.map(function(row) {
-        var cols = parseCSVRow(row);
-        return {
-          timestamp: cols[0], ticket: cols[1], actionCode: cols[2],
-          action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7],
-          garmentType: cols[8] || '', notes: cols[9] || '',
-          tailorName: cols[10] || '', tailorId: cols[11] || ''
-        };
-      }).filter(function(e){ return e.ticket; });
-
-      if (events.length === 0) {
-        document.getElementById('status-list').innerHTML = '<div class="status-empty">No valid events found. Check sheet column order.</div>';
+        document.getElementById('status-list').innerHTML = '<div class="status-empty">No garments checked in yet.</div>';
         return;
       }
 
-      var map = {};
-      events.forEach(function(e) {
-        if (!map[e.ticket]) map[e.ticket] = { ticket: e.ticket, events: [] };
-        map[e.ticket].events.push(e);
-      });
+      // New column structure (0-indexed):
+      // A=0 Ticket, B=1 Garment Type, C=2 Notes
+      // D=3 Check In Date, E=4 Check In Time, F=5 Check In SA Name, G=6 Check In SA ID
+      // H=7 Complete Date, I=8 Complete Time, J=9 Complete Tailor Name, K=10 Complete Tailor ID
+      // L=11 Pickup Date, M=12 Pickup Time, N=13 Pickup SA Name, O=14 Pickup SA ID
 
-      statusData.garments = Object.values(map).map(function(g) {
-        var codes = g.events.map(function(e){ return e.actionCode; });
+      statusData.garments = rows.map(function(row) {
+        var c = parseCSVRow(row);
+        if (!c[0]) return null;
+
+        var checkinDate = c[3] || null;
+        var completeDate = c[7] || null;
+        var pickupDate = c[11] || null;
+
         var status = 'tailor';
-        if (codes.indexOf('pickup') > -1) status = 'closed';
-        else if (codes.indexOf('complete') > -1) status = 'ready';
-        var checkinEvent = g.events.find(function(e){ return e.actionCode === 'checkin'; });
-        var completeEvent = g.events.find(function(e){ return e.actionCode === 'complete'; });
-        var pickupEvent = g.events.find(function(e){ return e.actionCode === 'pickup'; });
-        var checkinDate = checkinEvent ? new Date(checkinEvent.timestamp) : null;
-        var daysElapsed = checkinDate ? Math.floor((new Date() - checkinDate) / 86400000) : null;
-        var lastSA = g.events[g.events.length - 1].saName;
-        var garmentType = checkinEvent ? (checkinEvent.garmentType || '') : '';
-        var notes = checkinEvent ? (checkinEvent.notes || '') : '';
-        var tailor = completeEvent ? (completeEvent.tailorName || '') : '';
+        if (pickupDate) status = 'closed';
+        else if (completeDate) status = 'ready';
+
+        var daysElapsed = null;
+        if (checkinDate) {
+          var parts = c[3].split(' ');
+          var parsed = new Date(c[3]);
+          if (!isNaN(parsed)) {
+            daysElapsed = Math.floor((new Date() - parsed) / 86400000);
+          }
+        }
+
         return {
-          ticket: g.ticket, status: status,
-          checkinDate: checkinEvent ? checkinEvent.date : '—',
-          completeDate: completeEvent ? completeEvent.date : null,
-          pickupDate: pickupEvent ? pickupEvent.date : null,
-          daysElapsed: daysElapsed, lastSA: lastSA,
-          garmentType: garmentType, notes: notes, tailor: tailor
+          ticket:       c[0],
+          garmentType:  c[1] || '',
+          notes:        c[2] || '',
+          checkinDate:  c[3] || '—',
+          checkinTime:  c[4] || '',
+          checkinSA:    c[5] || '',
+          completeDate: completeDate,
+          completeTime: c[8] || '',
+          tailor:       c[9] || '',
+          pickupDate:   pickupDate,
+          pickupTime:   c[12] || '',
+          pickupSA:     c[13] || '',
+          status:       status,
+          daysElapsed:  daysElapsed
         };
-      });
+      }).filter(function(g){ return g !== null; });
 
       statusData.garments.sort(function(a, b){ return (b.daysElapsed||0) - (a.daysElapsed||0); });
       var now = new Date();
@@ -1041,13 +1038,18 @@ function renderStatusList() {
       '</div>' +
       '<div class="status-card-meta">' +
         (g.garmentType ? '<div class="status-meta-item" style="width:100%">Garment <span>' + g.garmentType + '</span></div>' : '') +
-        '<div class="status-meta-item">Checked in <span>' + g.checkinDate + '</span></div>' +
-        (g.completeDate ? '<div class="status-meta-item">Complete <span>' + g.completeDate + '</span></div>' : '') +
-        (g.tailor ? '<div class="status-meta-item">Tailor <span>' + g.tailor + '</span></div>' : '') +
-        (g.pickupDate ? '<div class="status-meta-item">Picked up <span>' + g.pickupDate + '</span></div>' : '') +
-        '<div class="status-meta-item">SA <span>' + g.lastSA + '</span></div>' +
-        (daysLabel ? '<div class="status-days ' + daysClass + '">' + daysLabel + '</div>' : '') +
-        (g.notes ? '<div class="status-meta-item" style="width:100%;margin-top:4px;padding-top:8px;border-top:1px solid var(--gray-200)">Notes <span>' + g.notes + '</span></div>' : '') +
+        (daysLabel ? '<div class="status-days ' + daysClass + '" style="width:100%">' + daysLabel + '</div>' : '') +
+        '<div style="width:100%;height:1px;background:var(--gray-200);margin:6px 0"></div>' +
+        '<div class="status-meta-item">Checked in <span>' + g.checkinDate + (g.checkinTime ? ' ' + g.checkinTime : '') + '</span></div>' +
+        (g.checkinSA ? '<div class="status-meta-item">By <span>' + g.checkinSA + '</span></div>' : '') +
+        (g.completeDate ? '<div style="width:100%;height:1px;background:var(--gray-200);margin:6px 0"></div>' : '') +
+        (g.completeDate ? '<div class="status-meta-item">Completed <span>' + g.completeDate + (g.completeTime ? ' ' + g.completeTime : '') + '</span></div>' : '') +
+        (g.tailor ? '<div class="status-meta-item">By tailor <span>' + g.tailor + '</span></div>' : '') +
+        (g.pickupDate ? '<div style="width:100%;height:1px;background:var(--gray-200);margin:6px 0"></div>' : '') +
+        (g.pickupDate ? '<div class="status-meta-item">Picked up <span>' + g.pickupDate + (g.pickupTime ? ' ' + g.pickupTime : '') + '</span></div>' : '') +
+        (g.pickupSA ? '<div class="status-meta-item">By <span>' + g.pickupSA + '</span></div>' : '') +
+        (g.notes ? '<div style="width:100%;height:1px;background:var(--gray-200);margin:6px 0"></div>' : '') +
+        (g.notes ? '<div class="status-meta-item" style="width:100%">Notes <span>' + g.notes + '</span></div>' : '') +
       '</div>' +
     '</div>';
   });
