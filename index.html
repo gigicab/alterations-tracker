@@ -551,7 +551,7 @@ function renderTailorList() {
       '<div class="sa-avatar" style="background:var(--amber-bg);color:var(--amber)">' + initials + '</div>' +
       '<div class="sa-info"><div class="sa-name">' + tailor.name + '</div><div class="sa-id">' + tailor.id + '</div></div>' +
       '<div class="sa-check"><svg viewBox="0 0 11 11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M2 5.5l2.5 2.5 4.5-4.5"/></svg></div>';
-    div.onclick = function() { selectTailor(tailor); };
+    div.onclick = (function(t){ return function() { selectTailor(t); }; })(tailor);
     el.appendChild(div);
   });
 }
@@ -598,7 +598,7 @@ function renderSAList() {
       '<div class="sa-avatar">' + initials + '</div>' +
       '<div class="sa-info"><div class="sa-name">' + sa.name + '</div><div class="sa-id">' + sa.id + '</div></div>' +
       '<div class="sa-check"><svg viewBox="0 0 11 11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M2 5.5l2.5 2.5 4.5-4.5"/></svg></div>';
-    div.onclick = function() { selectSA(sa); };
+    div.onclick = (function(s){ return function() { selectSA(s); }; })(sa);
     el.appendChild(div);
   });
 }
