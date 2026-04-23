@@ -514,7 +514,7 @@ function fetchSAListFromSheets() {
     .then(function(csv) {
       var rows = csv.trim().split('\n').slice(1);
       var list = rows.map(function(row) {
-        var cols = row.split(',').map(function(c) { return c.replace(/^"|"$/g, '').trim(); });
+        var cols = parseCSVRow(row);
         return { name: cols[0] || '', id: cols[1] || '' };
       }).filter(function(sa) { return sa.name; });
       if (list.length > 0) {
@@ -820,6 +820,27 @@ function writeToSheets(row) {
   });
 }
 
+// ─── CSV PARSER ───────────────────────────────────────────────────────────────
+function parseCSVRow(row) {
+  var cols = [];
+  var current = '';
+  var inQuotes = false;
+  for (var i = 0; i < row.length; i++) {
+    var ch = row[i];
+    if (ch === '"') {
+      if (inQuotes && row[i+1] === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      cols.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cols.push(current.trim());
+  return cols;
+}
+
 // ─── STATUS SCREEN ────────────────────────────────────────────────────────────
 var statusData = { garments: [], filter: 'all' };
 
@@ -848,7 +869,7 @@ function loadStatusData() {
         return;
       }
       var events = rows.map(function(row) {
-        var cols = row.split(',').map(function(c){ return c.replace(/^"|"$/g,'').trim(); });
+        var cols = parseCSVRow(row);
         return {
           timestamp: cols[0], ticket: cols[1], actionCode: cols[2],
           action: cols[3], saName: cols[4], saId: cols[5], date: cols[6], time: cols[7],
